@@ -322,21 +322,125 @@ shutdown						   关闭0/1端口
 
 ​	3、生成树协议的特点收敛时间长，从主要链路出现故障到切换至备份链路需要50s的时间。。快速生成树在生成树协议的基础上增加了两种端口角色：替换端口和备份端口，分别作为根端口和指定端口 的冗余端口。当根端口或指定端口出现故障时，可以直接切换到替换端口或备份端口，从而实现RSTP协议小于1s的快速收敛。
 
+## 实验五：路由器的基本配置
 
+**实验工具:Cisco Packet Tracer**
 
+**实验目的:配置路由器，使得PC机可以通过telnet直接访问路由器**
 
+**实验过程:**
 
+​	1、搭建拓扑图(连接PC和路由器不能够使用直连线，否则无法连通，要使用交叉线)
 
+​		用配置线和交叉线连接PC和路由器
 
+![72759920245](assets/1727599202459.png)
 
+2、配置PC的IP地址
 
+![72759924750](assets/1727599247506.png)
 
+3、配置路由器
 
+```
+hostname + name   更改路由器名称
+enable secret 123456  设置登录特权模式的密码
+line vty 0 4    设置telnet登录密码
+password 5ijsj
+login           开启需要密码模式
+interface fa 0/0  
+ip address 192.168.1.1 255.255.255.0 设置0/0端口的IP地址
+no shutdown       开启0/1端口
+```
 
+4、PC使用telnet连接路由器
 
+​	首先尝试能否ping通路由器配置的IP地址
 
+​	![72760047570](assets/1727600475705.png)
 
+​	顺利ping通后使用telnet命令连接路由器，需要输入刚才配置的密码才能连接，连接之后要进入特权模式还需要输入我们设置的进入特权模式的密码，分别是5ijsj和123456
 
+​	![72760056062](assets/1727600560624.png)
+
+​	show running可以查看当前的配置
+
+![72760059648](assets/1727600596486.png)
+
+ 实验成功
+
+**实验结论**
+
+​	使用telnet远程登录和配置路由器与交换机是差不多的，但是需要注意交换机是使用直连线，而路由器需要使用交连线。，其余是基本相同的。
+
+​	显示如下图时，说明已经PC机已经成功连接路由器了。
+
+![72760072081](assets/1727600720811.png)
+
+## 实验六：路由器单臂路由设置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:配置路由器，使得PC机可以通过telnet直接访问路由器**
+
+**实验过程:**
+
+​	1、搭建拓扑图
+
+​	![72760326596](assets/1727603265968.png)
+
+2、配置PC的IP地址
+
+PC1
+
+![72760343865](assets/1727603438656.png)
+
+PC2
+
+![72760345700](assets/1727603457004.png)
+
+3、配置交换机
+
+​	很简单，就是划分出vlan2和vlan3，然后分别对应0/2和0/3端口，将0/1端口设置为trunk模式
+
+![72760374158](assets/1727603741581.png)
+
+4、配置路由器
+
+> 新姿势：设置路由器的子接口0/0.1和0/0.2，封装为dot1q协议后设置IP地址，分别对应PC1和PC2的默认网关
+
+```
+Router>en
+Router#conf t
+Router(config)#int g0/0
+Router(config-if)#no sh
+Router(config-if)#exit
+Router(config)#int g0/0.1
+Router(config-subif)#enc
+Router(config-subif)#encapsulation dot1Q 2
+Router(config-subif)#ip address 192.168.1.1 255.255.255.0
+Router(config-subif)#exit
+Router(config)#int g0/0.2
+Router(config-subif)#encapsulation dot1Q 3
+Router(config-subif)#ip address 192.168.2.1 255.255.255.0
+Router(config-subif)#exit
+Router(config)#exit
+Router#show ip route 
+```
+
+![72760576823](assets/1727605768233.png)
+
+5、验证PC1和PC2是否能够通信
+
+![72760584736](assets/1727605847369.png)
+
+实验成功！
+
+**实验结论**：
+
+​	1、单臂路由：是为实现VLAN间通信的三层网络设备路由器，它只需要一个以太接口，通过创建子接口可以承担所有VLAN的网关，而在不同的VLAN间转发数据
+
+​	2、第一次实验是失败的，在查看路由配置时，显示没有设置ip，原因是在设置ip前没使用 dot1Q封装接口
 
 
 
