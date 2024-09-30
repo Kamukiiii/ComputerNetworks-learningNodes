@@ -444,6 +444,164 @@ Router#show ip route
 
 
 
+## 实验七：路由器静态路由设置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:使不同网段两台主机通过静态路由方式实现通信**
+
+**实验过程:**
+
+​	1、搭建拓扑图
+
+​		两个路由器要使用串行DEC连接
+
+![72769682604](assets/1727696826044.png)
+
+​	2、配置PC的IP地址
+
+​	![72769687069](assets/1727696870693.png)
+
+![72769690253](assets/1727696902535.png)
+
+3、配置路由器(实验七中的交换机只起到了一个交换的作用，不需要进行配置)
+
+​	路由器1
+
+```
+# 路由器1的端口和IP配置
+Router>en
+Router#conf t
+Router(config)#int f1/0
+Router(config-if)#no shutdown 
+Router(config-if)#ip address 192.168.1.1 255.255.255.0
+Router(config-if)#exit
+Router(config)#int s2/0
+Router(config-if)#ip address 192.168.3.1 255.255.255.0
+Router(config-if)#clock rate 64000
+Router(config-if)#no shutdown
+Router(config-if)#end
+Router#show ip route 
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.1.0/24 is directly connected, FastEthernet1/0
+C    192.168.3.0/24 is directly connected, Serial2/0
+```
+
+​	路由器2
+
+```
+Router>en
+Router#conf t
+Router(config-if)#int f1/0
+Router(config-if)#ip address 192.168.2.1 255.255.255.0
+Router(config-if)#no shutdown
+Router(config-if)#exit
+Router(config)#int s2/0
+Router(config-if)#ip address 192.168.3.2 255.255.255.0
+Router(config-if)#no shutdown
+Router(config-if)#exit
+Router(config)#end
+Router#
+%SYS-5-CONFIG_I: Configured from console by console
+
+Router#show ip route
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.2.0/24 is directly connected, FastEthernet1/0
+```
+
+4、静态路由实现PC之间通信
+
+路由器1
+
+```
+Router>en
+Router#conf t
+Router(config)#ip route 192.168.2.0 255.255.255.0 192.168.3.2  // 除了直连线连接的其他IP地址
+Router(config)#end
+Router#show ip route 
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.1.0/24 is directly connected, FastEthernet1/0
+S    192.168.2.0/24 [1/0] via 192.168.3.2
+C    192.168.3.0/24 is directly connected, Serial2/0
+```
+
+路由器2
+
+```
+Router>en
+Router#conf t
+Router(config)#ip route 192.168.1.0 255.255.255.0 192.168.3.1
+Router(config)#end
+Router#show ip route 
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+S    192.168.1.0/24 [1/0] via 192.168.3.1
+C    192.168.2.0/24 is directly connected, FastEthernet1/0
+C    192.168.3.0/24 is directly connected, Serial2/0
+```
+
+5、验证PC是否能够通信
+
+![72769914519](assets/1727699145198.png)
+
+![72769916729](assets/1727699167294.png)
+
+能ping通！实验成功
+
+**实验结论**
+
+​	1、端口要记得no shutdown打开
+
+​	2、路由器属于网络层设备，能够根据IP包头的信息，选择一条最佳路径，将数据包转发出去。实现不同网段主机之间的互相访问。路由器是根据路由表进行选路和转发的。而路由表里就是由一条条路由信息组成。
+
+​	3、生成路由表主要有两种方法：手工配置和动态配置，即静态路由协议配置和动态路由协议配置
+
+​	4、静态路由是指由网络管理员手工配置的路由信息。除了具有简单、高效、可靠的优点外，另一个好处就是网络安全保密性高
+
+​	5、缺省路由可以看作是静态路由的一种特殊情况，当数据在查找路由表时，没有找到和目标匹配的路由表项时，为数据指定的路由。
+
+
+
+
+
+
+
+
+
 
 
 
