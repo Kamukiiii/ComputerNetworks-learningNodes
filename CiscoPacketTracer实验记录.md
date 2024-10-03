@@ -594,32 +594,337 @@ C    192.168.3.0/24 is directly connected, Serial2/0
 
 ​	5、缺省路由可以看作是静态路由的一种特殊情况，当数据在查找路由表时，没有找到和目标匹配的路由表项时，为数据指定的路由。
 
+## 实验八：路由器RIP动态路由配置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:掌握路由器RIP动态路由配置**
+
+**实验过程:**
+
+![72795751047](assets/1727957510476.png)
+
+​	1、搭建拓扑图
+
+![72795729620](assets/1727957296206.png)
+
+​	2、设置PC的IP地址
+
+​	![72795734698](assets/1727957346982.png)
+
+![72795737534](assets/1727957375347.png)
+
+3、配置S0(多层交换机)
+
+```
+Switch>en
+Switch#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+Switch(config)#hostname s0
+s0(config)#vlan 10
+s0(config-vlan)#exit
+s0(config)#vlan 20
+s0(config-vlan)#exit
+s0(config)#int fa 0/10
+s0(config-if)#switchport access vlan 10
+s0(config-if)#exit
+s0(config)#int fa 0/20
+s0(config-if)#switchport access vlan 20
+s0(config-if)#exit
+s0(config)#end
+s0#show vlan
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
+                                                Fa0/5, Fa0/6, Fa0/7, Fa0/8
+                                                Fa0/9, Fa0/11, Fa0/12, Fa0/13
+                                                Fa0/14, Fa0/15, Fa0/16, Fa0/17
+                                                Fa0/18, Fa0/19, Fa0/21, Fa0/22
+                                                Fa0/23, Fa0/24, Gig0/1, Gig0/2
+10   VLAN0010                         active    Fa0/10
+20   VLAN0020                         active    Fa0/20
+1002 fddi-default                     active    
+1003 token-ring-default               active    
+1004 fddinet-default                  active    
+1005 trnet-default                    active    
+
+VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+1    enet  100001     1500  -      -      -        -    -        0      0
+10   enet  100010     1500  -      -      -        -    -        0      0
+20   enet  100020     1500  -      -      -        -    -        0      0
+1002 fddi  101002     1500  -      -      -        -    -        0      0   
+ --More-- 
+ 
+ // 划分并配置完端口网段后，开始配置vlan10和vlan20的IP地址
+s0(config)#interface vlan 10
+s0(config-if)#ip address 192.168.1.1 255.255.255.0
+s0(config-if)#no shutdown
+// 使用ip routing开启路由配置之后才能够查看到ip route配置
+s0(config-if)#ip routing      
+s0(config-if)#exit
+s0(config)#interface vlan 20
+s0(config-if)#ip address 192.168.3.1 255.255.255.0
+s0(config-if)#no shutdown
+s0(config-if)#ip routing    
+s0(config-if)#exit
+s0#show ip route
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.1.0/24 is directly connected, Vlan10
+
+s0#show running-config 
+....
+
+interface FastEthernet0/10
+ switchport access vlan 10
+!
+interface FastEthernet0/20
+ switchport access vlan 20
+!
+...
+interface Vlan10
+ mac-address 0060.7042.ea01
+ ip address 192.168.1.1 255.255.255.0
+!
+interface Vlan20
+ mac-address 0060.7042.ea02
+ ip address 192.168.3.1 255.255.255.0
+!
+
+// 配置RIP协议
+s0#conf t
+s0(config)#router rip
+s0(config-router)#network 192.168.1.0
+s0(config-router)#network 192.168.3.0
+s0(config-router)#version 2
+s0(config-router)#end
+```
+
+4、配置路由器
+
+R1:
+
+```
+Router>en
+Router#conf t
+Router(config)#hostname R1
+R1(config)#inter
+R1(config)#interface fa0/0
+R1(config-if)#ip address 192.168.3.2 255.255.255.0
+R1(config-if)#no shutdown
+R1(config-if)#exit
+R1(config)#interface s2/0
+R1(config-if)#ip address 192.168.4.1 255.255.255.0
+R1(config-if)#no shutdown
+R1(config-if)#clock rate 64000
+R1(config-if)#end
+R1#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.3.0/24 is directly connected, FastEthernet0/0
+
+
+// RIP协议配置
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#router rip
+R1(config-router)#network 192.168.3.0
+R1(config-router)#network 192.168.4.0
+R1(config-router)#version 2
+R1(config-router)#end
+```
+
+R2：
+
+```
+Router>enable 
+Router#conf t
+Router(config)#hostname R2
+R2(config)#int fa0/0
+R2(config-if)#ip address 192.168.2.1 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#exit
+R2(config)#int s2/0
+R2(config-if)#ip address 192.168.4.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#end
+R2#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.2.0/24 is directly connected, FastEthernet0/0
+C    192.168.4.0/24 is directly connected, Serial2/0
 
 
 
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#router rip
+R2(config-router)#network 192.168.2.0
+R2(config-router)#network 192.168.4.0
+R2(config-router)#version 2
+R2(config-router)#end
+R2#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+R    192.168.1.0/24 [120/2] via 192.168.4.1, 00:00:08, Serial2/0
+C    192.168.2.0/24 is directly connected, FastEthernet0/0
+R    192.168.3.0/24 [120/1] via 192.168.4.1, 00:00:08, Serial2/0
+C    192.168.4.0/24 is directly connected, Serial2/0
+```
 
 
 
+5、检查是否能够通信
+
+![72796059719](assets/1727960597191.png)
+
+通信成功表明实验成功
+
+**实验总结**
+
+​	RIP(路由信息协议)是应用较早、使用较普通的IGP内部网关协议，适用于小型同类网络，是距离矢量协议；RIP协议有两个版本，RIPv1J和RIPv2，RIPv1属于有类路由协议，不支持VLSM，以广播形式进行路由信息的更新，更新周期为30s；RIPv2属于无类路由西医，支持VLSM，以组播形式进行路由更新。
+
+## 实验九：路由器OSPF动态路由配置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:掌握路由器OSPF动态路由配置**
+
+**实验过程:**
+
+![72796126400](assets/1727961264000.png)
+
+1、搭建拓扑图
+
+![72796178891](assets/1727961788915.png)
+
+2、配置PC的IP地址(同实验八一样，这里不再截图)
+
+3、配置S1交换机
+
+​	配置过程也跟实验八差不多，但是使用协议不同，此处只展示配置OSPF路由协议时的命令行
+
+```
+Switch#conf t
+Switch(config)#router ospf 1
+Switch(config-router)#network 192.168.1.0 0.0.0.255 area 0
+Switch(config-router)#network 192.168.3.0 0.0.0.255 area 0
+Switch(config-router)#exit
+Switch(config)#end
+Switch#show ip route
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.1.0/24 is directly connected, Vlan10
+
+Switch#
+```
+
+4、配置路由器
+
+​	S1:	
+
+​	端口配置IP地址同实验八一致，因此还是只写出配置OSPF协议的过程
+
+```
+Router#conf t
+Router(config)#router ospf 1
+Router(config-router)#network 192.168.3.0 0.0.0.255 area 0
+Router(config-router)#network 192.168.4.0 0.0.0.255 area 0
+Router(config-router)#end
+Router#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+O    192.168.1.0/24 [110/2] via 192.168.3.1, 00:00:39, FastEthernet0/0
+C    192.168.3.0/24 is directly connected, FastEthernet0/0
+
+```
+
+​	S2：
+
+```
+Router(config)#router ospf 1
+Router(config-router)#network 192.168.2.0 0.0.0.255 area 0
+Router(config-router)#network 192.168.4.0 0.0.0.255 area 0
+Router(config-router)#end
+Router#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+O    192.168.1.0/24 [110/66] via 192.168.4.1, 00:00:10, Serial2/0
+C    192.168.2.0/24 is directly connected, FastEthernet0/0
+O    192.168.3.0/24 [110/65] via 192.168.4.1, 00:00:10, Serial2/0
+C    192.168.4.0/24 is directly connected, Serial2/0
+
+```
 
 
 
+5、测试PC能够互相通信
 
+![72796312926](assets/1727963129262.png)
 
+能够通信，实验成功！！！
 
+**实验结论**
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+​	OSPF开放式最短路径优先协议，是目前网络中应用最广泛的路由协议之一，属于内部网关路由协议。通过向全网扩散本设备的链路状态信息，使网络中每台设备最终同步一个具有全网链路状态的数据库，然后路由器采用SPF算法，以自己为根，计算到达其他网络的最短路径，最终形成全网络路由信息。
 
 
 
