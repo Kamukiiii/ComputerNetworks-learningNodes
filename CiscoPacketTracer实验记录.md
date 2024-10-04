@@ -926,6 +926,238 @@ C    192.168.4.0/24 is directly connected, Serial2/0
 
 ​	OSPF开放式最短路径优先协议，是目前网络中应用最广泛的路由协议之一，属于内部网关路由协议。通过向全网扩散本设备的链路状态信息，使网络中每台设备最终同步一个具有全网链路状态的数据库，然后路由器采用SPF算法，以自己为根，计算到达其他网络的最短路径，最终形成全网络路由信息。
 
+## 实验十：网络地址转换NAT配置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:实现外部主机访问内部服务器且将内部服务器IP地址修改为公网IP地址**
+
+**实验过程:**
+
+![72802667042](assets/1728026670428.png)
+
+​	1、搭建拓扑图
+
+![72802426654](assets/1728024266545.png)
+
+​	2、设置终端设备(PC和服务器)的IP地址
+
+![72802433707](assets/1728024337072.png)
+
+![72802439999](assets/1728024399992.png)
+
+3、开启路由器各端口并配置IP地址
+
+R0
+
+```
+Router>en
+Router#conf t
+Router(config)#host R0
+R0(config)#int fa0/0
+R0(config-if)#ip add 192.168.1.1 255.255.255.0
+R0(config-if)#no shutdown
+R0(config-if)#exit
+R0(config)#int s2/0
+R0(config-if)#ip add 222.0.1.1 255.255.255.0
+R0(config-if)#no shutdown
+
+%LINK-5-CHANGED: Interface Serial2/0, changed state to down
+R0(config-if)#clock rate 64000
+```
+
+R1
+
+```
+Router>en
+Router#conf t
+Router(config)#host R1
+R1(config)#int s2/0
+R1(config-if)#ip address 222.0.1.2 255.255.255.0
+R1(config-if)#no shutdown
+R1(config-if)#exit
+R1(config)#int fa0/0
+R1(config-if)#ip add 222.0.2.1 255.255.255.0
+R1(config-if)#no shutdown
+```
+
+4、配置静态路由(也可以配置RIP或OSPF动态路由)
+
+R0
+
+```
+R0(config)#ip route 222.0.2.0 255.255.255.0 222.0.1.2
+R0#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.1.0/24 is directly connected, FastEthernet0/0
+C    222.0.1.0/24 is directly connected, Serial2/0
+S    222.0.2.0/24 [1/0] via 222.0.1.2
+```
+
+R1
+
+```
+R1(config)#ip route 192.168.1.0 255.255.255.0 222.0.1.1
+R1(config)#end
+R1#show ip route
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+S    192.168.1.0/24 [1/0] via 222.0.1.1
+C    222.0.1.0/24 is directly connected, Serial2/0
+C    222.0.2.0/24 is directly connected, FastEthernet0/0
+
+```
+
+5、验证PC与服务器之间能否通信
+
+![72802561636](assets/1728025616363.png)
+
+![72802556689](assets/1728025566892.png)
+
+显然PC可以ping通服务器，也能够直接访问服务器的IP
+
+6、修改服务器的本地IP为公共IP222.0.1.3
+
+> 配置NAT分为三步：
+>
+>  	第一步：配置路由器端口的IP地址和路由策略
+>
+> ​	第二步：指定路由器端口哪个属于内部哪个属于外部
+>
+> ​	第三步：映射，将内部的私有地址映射到公网上的全局地址
+
+```
+R0>en
+R0#conf t
+R0(config)#int f0/0
+R0(config-if)#ip nat inside
+R0(config-if)#int s2/0
+R0(config-if)#ip nat outside 
+R0(config-if)#end
+R0#conf t
+R0(config)#ip nat inside source static 192.168.1.2 222.0.1.3
+R0(config)#end
+R0#show ip nat translations 
+Pro  Inside global     Inside local       Outside local      Outside global
+---  222.0.1.3         192.168.1.2        ---                ---
+
+```
+
+7、再次使用PC访问修改后的公共IP
+
+![72802623862](assets/1728026238628.png)
+
+可以访问，且访问后再在R0中查看ip路由发现新增了一条信息
+
+实验成功！
+
+**实验结果**
+
+​	1、这种方法适用于公司内部的服务器想要发布到公网IP上，供外部的PC访问
+
+​	2、NAT 将 网 络 划分 为 内 部 网 络 和 外 部 网 络两部分， 局 域 网 主机 利用 NAT 访 问 网 络 时 ，是 将 局 域 网 内 部 的 本 地 地 址 转换为全局地址 （互联 网 合法 的 IP 地 址 ） 后 转发 数据 包 ;
+	3、NAT 分 为 两 种 类 型 : NAT （网络 地 址 转换) 和 NAPT （网络端口地址转换 IP 地 址对 应 一 个全局地址）
+
+​		静态 NAT: 实现 内 部 地 址 与 外 部 地 址 一 对 一 的 映射 。 现 实 中 ，一般都用于服务器
+ 		动态 NAT: 定义 一 个 地 址 池 ，自动映射 ， 也 是 一 对 一 的 。现实中 ， 用 得 比较 少 ;
+		NAPT: 使 用 不 同 的 端口 来 映射 多 个 内 网 IP 地 址 到 一 个 指定 的 外网 IP 地 址 ， 多 对 一 。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
