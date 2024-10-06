@@ -8,13 +8,13 @@
 
 **实验过程:**
 
-​	1、搭建拓扑图：交换机2960   PC机   
+1、搭建拓扑图：交换机2960   PC机   
 
 ![72744354750](assets/1727443547500.png)
 
-​	2、实验背景：交换机和PC机要在同一网段
+2、实验背景：交换机和PC机要在同一网段
 
-​	3、实验过程：
+3、实验过程：
 
 ```
 # 交换机开启后，PC打开Terminal输入下述命令
@@ -50,7 +50,7 @@ show running                               # 查看配置
 
 **实验过程:**
 
-​	1、什么是VLAN？什么是Port VLAN？什么是Tag VLAN
+1、什么是VLAN？什么是Port VLAN？什么是Tag VLAN
 
 ​		VLAN是指在一个物理网段内，进行逻辑的划分，划分成若干个虚拟局域网。VLAN可以进行灵活的划分。相同的VLAN内的主机可以相互直接通信，不同的VLAN间的主机之间互相访问必须经由路由设备进行转发。广播数据包只可以在本VLAN内进行广播，不能传输到其他的VLAN中。
 
@@ -58,17 +58,17 @@ show running                               # 查看配置
 
 ​		Tag VLAN是基于交换机端口的另外一种类型，主要用于使交换机的相同的VLAN内的主机之间可以直接访问，同时对于不同VLAN的主机进行隔离。
 
-​	2、在CPT中搭建拓扑图
+2、在CPT中搭建拓扑图
 
 ![72745187347](assets/1727451873479.png)
 
-​	3、设置PC0-PC3的IP
+3、设置PC0-PC3的IP
 
 ​		分别为192.168.1.2/3/4/5 
 
 ​		默认网关均为192.168.1.1
 
-​	4、配置交换机
+4、配置交换机
 
 ```
 en
@@ -97,7 +97,7 @@ show vlan                      #查看配置
 
 ![72745263131](assets/1727452631315.png)
 
-​	5、PING
+5、PING
 
 ​		PC0尝试ping PC1 和 PC3 的IP，结果如下
 
@@ -125,11 +125,11 @@ show vlan                      #查看配置
 
 **实验过程:**
 
-​	1、搭建拓扑图：一台两层交换机、一台多层交换机、三台PC
+1、搭建拓扑图：一台两层交换机、一台多层交换机、三台PC
 
 ![72749846917](assets/1727498469175.png)
 
-​	2、设置PC机IP
+2、设置PC机IP
 
 ​		PC1=>192.168.1.2      PC2=>192.168.2.2   pc3=>192.168.1.3
 
@@ -220,7 +220,7 @@ PC3尝试ping PC1和PC2
 
 **实验过程:**
 
-​	1、搭建拓扑图，配置PC机的IP地址
+1、搭建拓扑图，配置PC机的IP地址
 
 ​	![72750269767](assets/1727502697677.png)
 
@@ -330,7 +330,7 @@ shutdown						   关闭0/1端口
 
 **实验过程:**
 
-​	1、搭建拓扑图(连接PC和路由器不能够使用直连线，否则无法连通，要使用交叉线)
+1、搭建拓扑图(连接PC和路由器不能够使用直连线，否则无法连通，要使用交叉线)
 
 ​		用配置线和交叉线连接PC和路由器
 
@@ -385,7 +385,7 @@ no shutdown       开启0/1端口
 
 **实验过程:**
 
-​	1、搭建拓扑图
+1、搭建拓扑图
 
 ​	![72760326596](assets/1727603265968.png)
 
@@ -452,13 +452,13 @@ Router#show ip route
 
 **实验过程:**
 
-​	1、搭建拓扑图
+1、搭建拓扑图
 
 ​		两个路由器要使用串行DEC连接
 
 ![72769682604](assets/1727696826044.png)
 
-​	2、配置PC的IP地址
+2、配置PC的IP地址
 
 ​	![72769687069](assets/1727696870693.png)
 
@@ -604,11 +604,11 @@ C    192.168.3.0/24 is directly connected, Serial2/0
 
 ![72795751047](assets/1727957510476.png)
 
-​	1、搭建拓扑图
+1、搭建拓扑图
 
 ![72795729620](assets/1727957296206.png)
 
-​	2、设置PC的IP地址
+2、设置PC的IP地址
 
 ​	![72795734698](assets/1727957346982.png)
 
@@ -936,11 +936,11 @@ C    192.168.4.0/24 is directly connected, Serial2/0
 
 ![72802667042](assets/1728026670428.png)
 
-​	1、搭建拓扑图
+1、搭建拓扑图
 
 ![72802426654](assets/1728024266545.png)
 
-​	2、设置终端设备(PC和服务器)的IP地址
+2、设置终端设备(PC和服务器)的IP地址
 
 ![72802433707](assets/1728024337072.png)
 
@@ -1081,37 +1081,198 @@ Pro  Inside global     Inside local       Outside local      Outside global
 
 
 
+## 实验十一：网络端口地址转换NAPT配置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:实现内部主机通过映射到公网IP访问外部服务器**
+
+**实验过程:**
+
+1、搭建拓扑图
+
+![72820170329](assets/1728201703291.png)
+
+2、配置终端IP地址
+
+​	PC0 192.168.1.2
+
+​	PC1 192.168.1.3
+
+​	Server 200.1.2.2
+
+​	
+
+3、配置路由端口IP地址
+
+```
+Router>en
+Router#conf t
+Router(config)#host R0
+R0(config)#int fa0/0
+R0(config-if)#ip add 192.168.1.1 255.255.255.0
+R0(config-if)#no shut
+R0(config-if)#exit
+R0(config)#int s2/0
+R0(config-if)#ip add 200.1.1.1 255.255.255.0
+R0(config-if)#clock rate 64000
+R0(config-if)#no shut
+R0(config-if)#no shutdown 
+R0(config-if)#exit
+```
+
+```
+Router>en
+Router#conf t
+Router(config)#host R1
+R1(config)#int fa0/0
+R1(config-if)#ip add 200.1.2.1 255.255.255.0
+R1(config-if)#no shut
+R1(config-if)#exit
+R1(config)#int s2/0
+R1(config-if)#ip add 200.1.1.2 255.255.255.0
+R1(config-if)#no shut
+R1(config-if)#exit
+```
+
+4、路由器配置静态路由
+
+```
+R0(config)#ip route 200.1.2.0 255.255.255.0 200.1.1.2
+R0(config)#end
+R0#
+%SYS-5-CONFIG_I: Configured from console by console
+
+R0#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.1.0/24 is directly connected, FastEthernet0/0
+C    200.1.1.0/24 is directly connected, Serial2/0
+S    200.1.2.0/24 [1/0] via 200.1.1.2
+
+```
+
+```
+R1(config)#ip route 192.168.1.0 255.255.255.0 200.1.1.1
+R1(config)#end
+R1#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+S    192.168.1.0/24 [1/0] via 200.1.1.1
+C    200.1.1.0/24 is directly connected, Serial2/0
+C    200.1.2.0/24 is directly connected, FastEthernet0/0
+```
+
+> ip route 192.168.1.0  255.255.255.0  200.1.1.1这条命令告诉路由器将任何目标为 192.168.1.0/24 网络的流量发送到下一跳地址 200.1.1.1
+
+5、尝试通信
+
+![72820306972](assets/1728203069720.png)
+
+通信成功
+
+6、配置NAPT
+
+> 第一步：配置路由IP地址以及路由策略
+>
+> 第二步：控制路由访问列表，即允许哪些网段出去
+>
+> 第三步：做一个地址池，公网地址让私网地址通过哪个地址池的公有地址出去
+>
+> 第四步：发布出去
+>
+> 第五步：访问控制列表映射到地址池里的地址，达到访问外部网络的实验目的
+
+```
+R0#conf t
+R0(config)#int fa0/0
+R0(config-if)#ip nat inside
+R0(config-if)#exit
+R0(config)#int s2/0
+R0(config-if)#ip nat outside 
+R0(config-if)#exit
 
 
+// 控制路由访问列表
+R0(config)#access-list ?
+  <1-99>     IP standard access list
+  <100-199>  IP extended access list
+R0(config)#access-list 1 ?
+  deny    Specify packets to reject
+  permit  Specify packets to forward
+  remark  Access list entry comment
+R0(config)#access-list 1 permit ?
+  A.B.C.D  Address to match
+  any      Any source host
+  host     A single host address
+R0(config)#access-list 1 permit 192.168.1.0 ?
+  A.B.C.D  Wildcard bits
+  <cr>
+R0(config)#access-list 1 permit 192.168.1.0 0.0.0.255 ?
+  <cr>
+R0(config)#access-list 1 permit 192.168.1.0 0.0.0.255 
 
+//配置地址池
+R0(config)#ip nat ?
+  inside   Inside address translation
+  outside  Outside address translation
+  pool     Define pool of addresses
+R0(config)#ip nat pool ?
+  WORD  Pool name
+R0(config)#ip nat pool 5ijsj ?
+  A.B.C.D  Start IP address
+R0(config)#ip nat pool 5ijsj 200.1.1.3 ?
+  A.B.C.D  End IP address
+R0(config)#ip nat pool 5ijsj 200.1.1.3 200.1.1.3 ?
+  netmask  Specify the network mask
+R0(config)#ip nat pool 5ijsj 200.1.1.3 200.1.1.3 netmask 255.255.255.0 ?
+  <cr>
+R0(config)#ip nat pool 5ijsj 200.1.1.3 200.1.1.3 netmask 255.255.255.0 
 
+//访问控制列表映射到地址池
+R0(config)#ip nat inside source list ?
+  <1-199>  Access list number for local addresses
+  WORD     Access list name for local addresses
+R0(config)#ip nat inside source list 1 pool 5ijsj ?
+  overload  Overload an address translation
+  <cr>
+R0(config)#ip nat inside source list 1 pool 5ijsj overload
+R0(config)#end
 
+//查看nat
+R0#show ip nat ?
+  statistics    Translation statistics
+  translations  Translation entries
+R0#show ip nat translations 
+```
 
+PC机没访问外部服务器时，nat没有任何显示
 
+使用PC浏览器访问一下外部服务器：
 
+![72820395345](assets/1728203953451.png)
 
+没有做NAPT配置之前访问外部服务器时，PC是使用内部IP198.x.x.x进行访问，配置后可以看到PC是使用公有IP200.x.x.x进行访问
 
+**实验结论:**
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+​	NAPT 采 用 端口 多 路 复 用 方式 。 内 部 网 络 的 所 有 主机 均 可共享 一 个 合法 外 部 IP 地 址 实现 对 Internet 的 访问 ， 从 而 可以 最 大 限度 地 节约 IP 地 址 资源 。 同 时 ， 又 可 隐藏 网 络 内 部的 所 有 主机 ， 有 效 避 免 来 自 internet 的 攻击 。 因 此 ， 目 前网 络 中 应 用 最 多 的 总 是 端口 多 路 复 用 方式 。
 
 
 
