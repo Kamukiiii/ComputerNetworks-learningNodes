@@ -1274,34 +1274,262 @@ PC机没访问外部服务器时，nat没有任何显示
 
 ​	NAPT 采 用 端口 多 路 复 用 方式 。 内 部 网 络 的 所 有 主机 均 可共享 一 个 合法 外 部 IP 地 址 实现 对 Internet 的 访问 ， 从 而 可以 最 大 限度 地 节约 IP 地 址 资源 。 同 时 ， 又 可 隐藏 网 络 内 部的 所 有 主机 ， 有 效 避 免 来 自 internet 的 攻击 。 因 此 ， 目 前网 络 中 应 用 最 多 的 总 是 端口 多 路 复 用 方式 。
 
+## 实验十二：路由器综合路由配置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:路由重分布实现rip和ospf混用实现PC间的通信**
+
+**实验过程:**
+
+1、搭建拓扑图
+
+![72837424338](assets/1728374243385.png)
+
+2、配置主机和路由接口的网段和IP地址
+
+主机IP配置
+
+![72837433151](assets/1728374331510.png)
+
+路由接口的网段和IP地址配置
+
+交换机：
+
+```
+Switch>en
+Switch#conf t
+Switch(config)#vlan 2
+Switch(config-vlan)#exit
+Switch(config)#int fa0/10
+Switch(config-if)#switchport access vlan 2
+Switch(config-if)#exit
+
+
+Switch(config)#int vlan 1
+Switch(config-if)#ip address 192.168.1.1 255.255.255.0
+Switch(config-if)#no shut
+Switch(config-if)#exit
+
+
+Switch(config)#int vlan 2
+Switch(config-if)#ip add 192.168.2.1 255.255.255.0
+Switch(config-if)#no shut
+Switch(config-if)#end
+
+
+Switch#show int vlan 1
+```
+
+R0
+
+```
+Router>en
+Router#conf t
+Router(config)#host R0
+R0(config)#int fa 0/0
+R0(config-if)#ip address 192.168.2.2 255.255.255.0
+R0(config-if)#no shut
+R0(config-if)#exit
+R0(config)#int fa0/1
+R0(config-if)#ip address 192.168.3.1 255.255.255.0
+R0(config-if)#no shut
+```
+
+R1
+
+```
+Router>en
+Router#conf t
+Router(config)#host R1
+
+R1(config)#int fa0/1
+R1(config-if)#ip address 192.168.3.2 255.255.255.0
+R1(config-if)#no shut
+R1(config-if)#exit
+
+R1(config)#int fa0/0
+R1(config-if)#ip address 192.168.4.1 255.255.255.0
+R1(config-if)#no shut
+```
+
+3、配置协议
+
+左侧：rip路由协议
+
+```
+Switch#conf t
+Switch(config)#ip routing
+Switch(config)#router rip
+Switch(config-router)#network 192.168.1.0 
+Switch(config-router)#network 192.168.2.0
+Switch(config-router)#version 2
+```
+
+R0：发布rip协议，同时在ospf协议也发布相应的网段
+
+```
+R0(config)#ip routing
+R0(config)#router rip
+R0(config-router)#network 192.168.2.0
+R0(config-router)#version 2
+R0(config-router)#router ospf 1
+R0(config-router)#network 192.168.3.0 0.0.0.255 area 0
+```
+
+R1：ospf协议发布相应网段3和4
+
+```
+R1(config)#ip routing
+R1(config)#router ospf 1
+R1(config-router)#network 192.168.3.0 0.0.0.255 area 0
+R1(config-router)#network 192.168.4.0 0.0.0.255 area 0
+R1(config-router)#end
+
+
+
+R1#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.3.0/24 is directly connected, FastEthernet0/1
+C    192.168.4.0/24 is directly connected, FastEthernet0/0
+```
+
+4、查看路由器的路由配置
+
+```
+
+R0#show  ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+R    192.168.1.0/24 [120/1] via 192.168.2.1, 00:00:11, FastEthernet0/0
+C    192.168.2.0/24 is directly connected, FastEthernet0/0
+C    192.168.3.0/24 is directly connected, FastEthernet0/1
+O    192.168.4.0/24 [110/2] via 192.168.3.2, 00:02:14, FastEthernet0/1
 
 
 
 
 
+R1#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+C    192.168.3.0/24 is directly connected, FastEthernet0/1
+C    192.168.4.0/24 is directly connected, FastEthernet0/0
+```
+
+5、检测是否可以通信
+
+检测R0是否可以与主机进行通信
+
+![72837590496](assets/1728375904966.png)
+
+发现是可以的
+
+但是检测主机间是否可以通信
+
+![72837594038](assets/1728375940380.png)
+
+发现不行
+
+查看交换机的路由表发现并没有右侧的路由信息
+
+![72837606183](assets/1728376061837.png)
+
+> 原因：左右两侧采用的是不同的路由协议，我们需要通过路由重定义来使两侧通信
+
+6、路由重分布操作
+
+```
+R0#conf t
+
+R0(config)#router rip
+R0(config-router)#redistribute ?
+  connected  Connected
+  eigrp      Enhanced Interior Gateway Routing Protocol (EIGRP)
+  metric     Metric for redistributed routes
+  ospf       Open Shortest Path First (OSPF)
+  rip        Routing Information Protocol (RIP)
+  static     Static routes
+R0(config-router)#redistribute ospf 1 ?
+  match   Redistribution of OSPF routes
+  metric  Metric for redistributed routes
+  <cr>
+R0(config-router)#redistribute ospf 1 
+R0(config-router)#exit
 
 
 
+R0(config)#router ospf 1 
+R0(config-router)#re
+R0(config-router)#redistribute ?
+  bgp        Border Gateway Protocol (BGP)
+  connected  Connected
+  eigrp      Enhanced Interior Gateway Routing Protocol (EIGRP)
+  metric     Metric for redistributed routes
+  ospf       Open Shortest Path First (OSPF)
+  rip        Routing Information Protocol (RIP)
+  static     Static routes
+R0(config-router)#redistribute rip ?
+  metric       Metric for redistributed routes
+  metric-type  OSPF/IS-IS exterior metric type for redistributed routes
+  subnets      Consider subnets for redistribution into OSPF
+  tag          Set tag for routes redistributed into OSPF
+  <cr>
+  
+R0(config-router)#redistribute rip subnets  
+R0(config-router)#end
+```
+
+查看路由表配置
+
+![72837632062](assets/1728376320623.png)
+
+7、再次检测是否通信
+
+还是不行，肯定哪里出了问题
+
+问题：在CPT5.3及以上的版本中，Switch0不能学习到192.168.3.0、192.168.4.0的路由信息，需要给Switch0指定静态路由
+
+```
+Switch#conf t
+Switch(config)#ip route 0.0.0.0 0.0.0.0 192.168.2.2
+Switch(config)#exit
+```
+
+![72837715164](assets/1728377151642.png)
 
 
 
+然后再看看能否通信
 
+![72837719523](assets/1728377195230.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+成功通信！
 
 
 
