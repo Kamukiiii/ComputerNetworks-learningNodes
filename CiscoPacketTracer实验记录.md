@@ -1531,6 +1531,152 @@ Switch(config)#exit
 
 成功通信！
 
+## 实验十三：标准IP访问控制列表配置
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:实现IP访问控制列表控制允许访问IP和拒绝访问IP**
+
+**实验过程:**
+
+1、搭建拓扑图
+
+![72848439288](assets/1728484392885.png)
+
+2、设置PC的IP地址和路由器各端口的IP地址
+
+PC机的IP地址：
+
+![72848457445](assets/1728484574450.png)
+
+
+
+路由器端口的IP地址
+
+```
+R0
+
+Router>en
+Router#conf t
+Router(config)#int fa0/0
+Router(config-if)#ip add 172.16.1.1 255.255.255.0
+Router(config-if)#no shut
+Router(config-if)#exit
+Router(config)#int fa1/0
+Router(config-if)#ip add 172.16.2.1 255.255.255.0
+Router(config-if)#no shut
+Router(config-if)#int s2/0
+Router(config-if)#ip add 172.16.3.1 255.255.255.0
+Router(config-if)#no shut
+Router(config-if)#clock rate 64000
+Router(config-if)#exit
+```
+
+```
+R1
+
+Router>en 
+Router#conf t
+Router(config)#int fa0/0
+Router(config-if)#ip add 172.16.4.1 255.255.255.0
+Router(config-if)#no shut
+Router(config-if)#exit
+Router(config)#int s2/0
+Router(config-if)#ip add 172.16.3.2 255.255.255.0
+Router(config-if)#no shut
+```
+
+3、设置静态路由
+
+```
+R0
+Router(config)#ip route 172.16.4.0 255.255.255.0 172.16.3.2
+```
+
+```
+R1
+Router(config)#ip route 0.0.0.0 0.0.0.0 172.16.3.1
+Router(config)#end
+Router#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is 172.16.3.1 to network 0.0.0.0
+
+     172.16.0.0/24 is subnetted, 2 subnets
+C       172.16.3.0 is directly connected, Serial2/0
+C       172.16.4.0 is directly connected, FastEthernet0/0
+S*   0.0.0.0/0 [1/0] via 172.16.3.1
+```
+
+4、检查PC通信情况
+
+![72848547690](assets/1728485476901.png)
+
+5、进行标准IP访问控制列表配置
+
+```
+Router#conf t
+Router(config)#ip access-list ?
+  extended  Extended Access List
+  standard  Standard Access List
+Router(config)#ip access-list standard 5ijsj
+Router(config-std-nacl)#permit ?
+  A.B.C.D  Address to match
+  any      Any source host
+  host     A single host address
+Router(config-std-nacl)#permit 172.16.1.0 ?
+  A.B.C.D  Wildcard bits
+  <cr>
+Router(config-std-nacl)#permit 172.16.1.0 0.0.0.255
+Router(config-std-nacl)#deny 172.16.2.0 0.0.0.255
+Router(config-std-nacl)#int s2/0
+Router(config-if)#ip access-group ?
+  <1-199>  IP access list (standard or extended)
+  WORD     Access-list name
+Router(config-if)#ip access-group 5ijsj ?
+  in   inbound packets
+  out  outbound packets
+Router(config-if)#ip access-group 5ijsj out
+Router(config-if)#end
+```
+
+6、再次进行通信
+
+![72848595253](assets/1728485952530.png)
+
+可以看到我们允许访问的IP是可以通信的，反之拒绝反问的IP则不可到达。
+
+实验目的达成。
+
+**实验总结：**
+
+ACLs的全称为接入控制列表（Access Control Lists）,也成为访问列表，俗称防火墙或包过滤。ACLs通过定义一些规则对网络设备接口上的数据报文进行控制：允许通过或丢弃，从而提高网络可管理性和安全性；
+
+IP ACL分为两种：标准IP访问列表和扩展IP访问列表，编号范围分别为1~99、1300~1999、100~199、2000~2699;
+
+标准IP访问列表可以根据数据包的源IP地址定义规则，进行数据包的过滤；
+
+扩展IP访问列表可以根据数据包的源IP、目的IP、源端口、目的端口、协议来定义规则，进行数据包的过滤；
+
+IP ACL基于接口进行规则的应用，分为：入栈应用和出栈应用；
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
