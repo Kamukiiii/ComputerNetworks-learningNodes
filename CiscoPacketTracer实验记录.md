@@ -1666,6 +1666,259 @@ IP ACL分为两种：标准IP访问列表和扩展IP访问列表，编号范围�
 
 IP ACL基于接口进行规则的应用，分为：入栈应用和出栈应用；
 
+## 实验十四：扩展IP访问控制列表
+
+**实验工具:Cisco Packet Tracer**
+
+**实验目的:扩展IP防控列表实现允许web访问但禁止终端ping命令通信**
+
+**实验过程:**
+
+1、搭建拓扑图
+
+![72853829782](assets/1728538297825.png)
+
+
+
+2、设置PC的IP地址和路由器各端口的IP地址
+
+PC0  172.16.1.2 255.255.255.0 172.16.1.1
+
+Server0  172.16.4.2 255.255.255.0 172.16.4.1
+
+```
+R0
+
+Router>en
+Router#conf t
+Router(config)#host R0
+R0(config)#int fa0/0
+R0(config-if)#ip add 172.16.1.1 255.255.255.0
+Router(config-if)#no shut
+R0(config-if)#int fa1/0
+R0(config-if)#ip add 172.16.2.1 255.255.255.0
+R0(config-if)#no shut
+R0(config-if)#exit
+
+R1
+Router(config)#host R1
+R1(config)#int fa1/0
+R1(config-if)#ip add 172.16.2.2 255.255.255.0
+R1(config-if)#no shut
+R1(config-if)#int s2/0
+R1(config-if)#ip add 172.16.3.1 255.255.255.0
+R1(config-if)#no shut
+R1(config-if)#clock rate 64000
+R1(config-if)#exit
+
+R2
+Router>en
+Router#conf t
+Router(config)#host R2
+R2(config)#int fa0/0
+R2(config-if)#ip add 172.16.4.1 255.255.255.0
+R2(config-if)#no shut
+R2(config-if)#int s2/0
+R2(config-if)#ip add 172.16.3.2 255.255.255.0
+R2(config-if)#no shut
+```
+
+3、配置静态路由完成PC和服务端的正常通信
+
+```
+R0(config)#ip route 0.0.0.0 0.0.0.0 172.16.2.2
+
+R2(config)#ip route 0.0.0.0 0.0.0.0 172.16.3.1 
+
+R1(config)#ip route 172.16.1.0 255.255.255.0 172.16.2.1
+R1(config)#ip route 172.16.4.0 255.255.255.0 172.16.3.2
+R1(config)#end
+R1#show ip rou
+Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+     172.16.0.0/24 is subnetted, 4 subnets
+S       172.16.1.0 [1/0] via 172.16.2.1
+C       172.16.2.0 is directly connected, FastEthernet1/0
+C       172.16.3.0 is directly connected, Serial2/0
+S       172.16.4.0 [1/0] via 172.16.3.2
+```
+
+4、查看通信情况
+
+![72853913290](assets/1728539132901.png)
+
+![72853915297](assets/1728539152977.png)
+
+可以ping通也可以访问服务端的网页
+
+接下来我们要做的是通过扩展IP访问控制列表允许访问网页但不允许ping通
+
+5、配置扩展IP访问控制列表
+
+```
+R1#conf t
+R1(config)#access-list ?
+  <1-99>     IP standard access list
+  <100-199>  IP extended access list
+R1(config)#access-list 100 ?
+  deny    Specify packets to reject
+  permit  Specify packets to forward
+  remark  Access list entry comment
+R1(config)#access-list 100 permit ?
+  ahp    Authentication Header Protocol
+  eigrp  Cisco's EIGRP routing protocol
+  esp    Encapsulation Security Payload
+  gre    Cisco's GRE tunneling
+  icmp   Internet Control Message Protocol
+  ip     Any Internet Protocol
+  ospf   OSPF routing protocol
+  tcp    Transmission Control Protocol
+  udp    User Datagram Protocol
+R1(config)#access-list 100 permit tcp ?
+  A.B.C.D  Source address
+  any      Any source host
+  host     A single source host
+R1(config)#access-list 100 permit tcp host ?
+  A.B.C.D  Source address
+R1(config)#access-list 100 permit tcp host 172.16.1.2 ?
+  A.B.C.D  Destination address
+  any      Any destination host
+  eq       Match only packets on a given port number
+  gt       Match only packets with a greater port number
+  host     A single destination host
+  lt       Match only packets with a lower port number
+  neq      Match only packets not on a given port number
+  range    Match only packets in the range of port numbers
+R1(config)#access-list 100 permit tcp host 172.16.1.2 host ?
+  A.B.C.D  Destination address
+R1(config)#access-list 100 permit tcp host 172.16.1.2 host 172.16.4.2 ?
+  dscp         Match packets with given dscp value
+  eq           Match only packets on a given port number
+  established  established
+  gt           Match only packets with a greater port number
+  lt           Match only packets with a lower port number
+  neq          Match only packets not on a given port number
+  precedence   Match packets with given precedence value
+  range        Match only packets in the range of port numbers
+  <cr>
+R1(config)#access-list 100 permit tcp host 172.16.1.2 host 172.16.4.2 eq ?
+  <0-65535>  Port number
+  ftp        File Transfer Protocol (21)
+  pop3       Post Office Protocol v3 (110)
+  smtp       Simple Mail Transport Protocol (25)
+  telnet     Telnet (23)
+  www        World Wide Web (HTTP, 80)
+R1(config)#access-list 100 permit tcp host 172.16.1.2 host 172.16.4.2 eq www 
+R1(config)#access-list 100 deny ?
+  ahp    Authentication Header Protocol
+  eigrp  Cisco's EIGRP routing protocol
+  esp    Encapsulation Security Payload
+  gre    Cisco's GRE tunneling
+  icmp   Internet Control Message Protocol
+  ip     Any Internet Protocol
+  ospf   OSPF routing protocol
+  tcp    Transmission Control Protocol
+  udp    User Datagram Protocol
+R1(config)#access-list 100 deny icmp ?
+  A.B.C.D  Source address
+  any      Any source host
+  host     A single source host
+R1(config)#access-list 100 deny icmp host 172.16.1.2 host 172.16.4.2 ?
+  <0-256>               type-num
+  echo                  Echo (ping)
+  echo-reply            Echo reply
+  host-unreachable      Host unreachable
+  net-unreachable       Net unreachable
+  port-unreachable      Port unreachable
+  protocol-unreachable  Protocol unreachable
+  ttl-exceeded          TTL exceeded
+  unreachable           All unreachables
+  <cr>
+R1(config)#access-list 100 deny icmp host 172.16.1.2 host 172.16.4.2 
+R1(config)#int s2/0
+R1(config-if)#ip access-group 100 ?
+  in   inbound packets
+  out  outbound packets
+R1(config-if)#ip access-group 100 out
+R1(config-if)#end
+```
+
+6、再次查看通信情况
+
+![72853962772](assets/1728539627724.png)
+
+
+
+![72853964438](assets/1728539644384.png)
+
+发现可以访问web但是不能ping通，实验成功！
+
+**实验总结：**
+
+扩展访问列表的配置包括以下两步：
+
+- 定义扩展IP访问列表
+- 将扩展IP访问列表应用于特定接口上
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
